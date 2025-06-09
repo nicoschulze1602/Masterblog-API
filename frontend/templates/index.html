@@ -11,6 +11,13 @@
     <div class="container">
         <h1>📚 Blog Posts</h1>
         <div class="input-field">
+            <input type="text" id="username" placeholder="Username">
+            <input type="password" id="password" placeholder="Password">
+            <button onclick="register()">Register</button>
+            <button onclick="login()">Login</button>
+            <button onclick="logout()" id="logout-btn" style="display:none;">Logout</button>
+        </div>
+        <div class="input-field">
             <input type="text" id="api-base-url" placeholder="Enter API Base URL" value="http://127.0.0.1:5002/api">
             <button onclick="loadPosts()">Load Posts</button>
         </div>

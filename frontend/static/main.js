@@ -27,8 +27,16 @@ function loadPosts() {
             data.forEach(post => {
                 const postDiv = document.createElement('div');
                 postDiv.className = 'post';
-                postDiv.innerHTML = `<h2>${post.title}</h2><p>${post.content}</p>
-                <button onclick="deletePost(${post.id})">Delete</button>`;
+                const baseUrl = document.getElementById('api-base-url').value;
+                fetch(baseUrl + '/session', { credentials: 'include' })
+                    .then(res => res.json())
+                    .then(session => {
+                        let html = `<h2>${post.title}</h2><p>${post.content}</p>`;
+                        if (post.author === session.user) {
+                            html += `<button onclick="deletePost(${post.id})">Delete</button>`;
+                        }
+                        postDiv.innerHTML = html;
+                    });
                 postContainer.appendChild(postDiv);
             });
         })
@@ -42,11 +50,12 @@ function addPost() {
     var postTitle = document.getElementById('post-title').value;
     var postContent = document.getElementById('post-content').value;
 
-    // Use the Fetch API to send a POST request to the /posts endpoint
+    // Use the Fetch API to send a POST request to the /posts endpoint with credentials
     fetch(baseUrl + '/posts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: postTitle, content: postContent })
+        body: JSON.stringify({ title: postTitle, content: postContent }),
+        credentials: 'include'
     })
     .then(response => response.json())  // Parse the JSON data from the response
     .then(post => {
@@ -60,13 +69,61 @@ function addPost() {
 function deletePost(postId) {
     var baseUrl = document.getElementById('api-base-url').value;
 
-    // Use the Fetch API to send a DELETE request to the specific post's endpoint
+    // Use the Fetch API to send a DELETE request to the specific post's endpoint with credentials
     fetch(baseUrl + '/posts/' + postId, {
-        method: 'DELETE'
+        method: 'DELETE',
+        credentials: 'include'
     })
     .then(response => {
         console.log('Post deleted:', postId);
         loadPosts(); // Reload the posts after deleting one
     })
     .catch(error => console.error('Error:', error));  // If an error occurs, log it to the console
+}
+
+// --- Authentication functions ---
+function register() {
+    const baseUrl = document.getElementById('api-base-url').value;
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+
+    fetch(baseUrl + '/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+        credentials: 'include'
+    })
+    .then(res => res.json())
+    .then(data => alert(data.message || data.error));
+}
+
+function login() {
+    const baseUrl = document.getElementById('api-base-url').value;
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+
+    fetch(baseUrl + '/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+        credentials: 'include'
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert(data.message || data.error);
+        document.getElementById('logout-btn').style.display = 'inline-block';
+    });
+}
+
+function logout() {
+    const baseUrl = document.getElementById('api-base-url').value;
+    fetch(baseUrl + '/logout', {
+        method: 'POST',
+        credentials: 'include'
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert(data.message || data.error);
+        document.getElementById('logout-btn').style.display = 'none';
+    });
 }

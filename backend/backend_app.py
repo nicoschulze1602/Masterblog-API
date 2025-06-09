@@ -1,9 +1,11 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, make_response, session
 from flask_cors import CORS
+from werkzeug.security import generate_password_hash, check_password_hash
+from uuid import uuid4
 
 app = Flask(__name__)
 CORS(app)  # This will enable CORS for all routes
-
+app.secret_key = 'supersecretkey'  # Für Sessions (in echten Projekten env nutzen!)
 
 POSTS = [
     {"id": 1, "title": "Getting started with Flask", "content": "Flask is a lightweight WSGI web application framework."},
@@ -22,6 +24,42 @@ POSTS = [
     {"id": 14, "title": "Simple CRUD with Flask and SQLite", "content": "Create, read, update, and delete entries with ease."},
     {"id": 15, "title": "Tips for Debugging Flask Apps", "content": "Use Flask's debugger and logging for error tracking."}
 ]
+
+USERS = {}  # username -> {password_hash, id}
+
+
+@app.route('/api/register', methods=['POST'])
+def register():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+    if not username or not password:
+        return jsonify({"error": "Username and password required"}), 400
+    if username in USERS:
+        return jsonify({"error": "Username already exists"}), 400
+    USERS[username] = {
+        "id": str(uuid4()),
+        "password_hash": generate_password_hash(password)
+    }
+    return jsonify({"message": f"User {username} registered successfully."}), 201
+
+
+@app.route('/api/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+    user = USERS.get(username)
+    if not user or not check_password_hash(user['password_hash'], password):
+        return jsonify({"error": "Invalid credentials"}), 401
+    session['user'] = username
+    return jsonify({"message": f"Logged in as {username}"}), 200
+
+
+@app.route('/api/logout', methods=['POST'])
+def logout():
+    session.pop('user', None)
+    return jsonify({"message": "Logged out successfully"}), 200
 
 
 @app.route('/api/posts/search', methods=['GET'])
@@ -54,6 +92,8 @@ def get_posts():
 
 @app.route('/api/posts', methods=['POST'])
 def add_post():
+    if 'user' not in session:
+        return jsonify({"error": "Authentication required"}), 401
     new_post = request.get_json()
     if not new_post or 'title' not in new_post or 'content' not in new_post:
         return jsonify({"error": "Invalid data"}), 400
@@ -62,26 +102,33 @@ def add_post():
     post = {
         "id": new_id,
         "title": new_post['title'],
-        "content": new_post['content']
+        "content": new_post['content'],
+        "author": session['user']
     }
     POSTS.append(post)
     return jsonify(post), 201
 
 
-@app.route('/api/posts/<int:id>', methods=['DELETE'])
+@app.route('/api/posts/<int:post_id>', methods=['DELETE'])
 def delete_post(post_id):
+    if 'user' not in session:
+        return jsonify({"error": "Authentication required"}), 401
     global POSTS
 
     post_to_delete = next((post for post in POSTS if post['id'] == post_id), None)
     if post_to_delete is None:
         return jsonify({"error": f"Post with id {post_id} not found."}), 404
+    if post_to_delete.get('author') != session['user']:
+        return jsonify({"error": "Not authorized to delete this post."}), 403
 
     POSTS = [post for post in POSTS if post['id'] != post_id]
     return jsonify({"message": f"Post with id {post_id} has been deleted successfully."}), 200
 
 
-@app.route('/api/posts/<int:id>', methods=['PUT'])
+@app.route('/api/posts/<int:post_id>', methods=['PUT'])
 def update_post(post_id):
+    if 'user' not in session:
+        return jsonify({"error": "Authentication required"}), 401
     updated_data = request.get_json()
     if updated_data is None:
         return jsonify({"error": "No input provided."}), 400
@@ -89,6 +136,8 @@ def update_post(post_id):
     post = next((post for post in POSTS if post['id'] == post_id), None)
     if post is None:
         return jsonify({"error": f"Post with id {post_id} not found."}), 404
+    if post.get('author') != session['user']:
+        return jsonify({"error": "Not authorized to edit this post."}), 403
 
     # Nur aktualisieren, wenn neue Werte übergeben wurden
     post['title'] = updated_data.get('title', post['title'])
