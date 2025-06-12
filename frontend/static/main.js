@@ -11,36 +11,56 @@ window.onload = function() {
 
 // Function to fetch all the posts from the API and display them on the page
 function loadPosts() {
-    // Retrieve the base URL from the input field and save it to local storage
-    var baseUrl = document.getElementById('api-base-url').value;
+    const baseUrl = document.getElementById('api-base-url').value;
     localStorage.setItem('apiBaseUrl', baseUrl);
 
-    // Use the Fetch API to send a GET request to the /posts endpoint
-    fetch(baseUrl + '/posts')
-        .then(response => response.json())  // Parse the JSON data from the response
-        .then(data => {  // Once the data is ready, we can use it
-            // Clear out the post container first
-            const postContainer = document.getElementById('post-container');
-            postContainer.innerHTML = '';
+    const searchTitle = document.getElementById('search-title').value;
+    const searchContent = document.getElementById('search-content').value;
+    const sortField = document.getElementById('sort-field').value;
+    const sortDirection = document.getElementById('sort-direction').value;
 
-            // For each post in the response, create a new post element and add it to the page
-            data.forEach(post => {
-                const postDiv = document.createElement('div');
-                postDiv.className = 'post';
-                const baseUrl = document.getElementById('api-base-url').value;
-                fetch(baseUrl + '/session', { credentials: 'include' })
-                    .then(res => res.json())
-                    .then(session => {
+    let url = baseUrl;
+    let isSearch = searchTitle || searchContent;
+    if (isSearch) {
+        url += '/search?';
+        if (searchTitle) url += `title=${encodeURIComponent(searchTitle)}&`;
+        if (searchContent) url += `content=${encodeURIComponent(searchContent)}&`;
+    } else {
+        url += '/posts?';
+    }
+
+    if (sortField) url += `sort=${sortField}&`;
+    if (sortDirection) url += `direction=${sortDirection}&`;
+
+    url = url.replace(/[&?]$/, '');
+
+    fetch(baseUrl + '/session', { credentials: 'include' })
+        .then(res => res.json())
+        .then(session => {
+            fetch(url, { credentials: 'include' })
+                .then(response => response.json())
+                .then(data => {
+                    const postContainer = document.getElementById('post-container');
+                    postContainer.innerHTML = '';
+                    data.reverse(); // recent first
+                    data.forEach(post => {
+                        const postDiv = document.createElement('div');
+                        postDiv.className = 'post';
+                        // Add class for my-post or other-post
+                        if (post.author === session.user) {
+                            postDiv.classList.add('my-post');
+                        } else {
+                            postDiv.classList.add('other-post');
+                        }
                         let html = `<h2>${post.title}</h2><p>${post.content}</p>`;
                         if (post.author === session.user) {
                             html += `<button onclick="deletePost(${post.id})">Delete</button>`;
                         }
                         postDiv.innerHTML = html;
+                        postContainer.appendChild(postDiv);
                     });
-                postContainer.appendChild(postDiv);
-            });
-        })
-        .catch(error => console.error('Error:', error));  // If an error occurs, log it to the console
+                });
+        });
 }
 
 // Function to send a POST request to the API to add a new post
@@ -60,6 +80,8 @@ function addPost() {
     .then(response => response.json())  // Parse the JSON data from the response
     .then(post => {
         console.log('Post added:', post);
+        document.getElementById('post-title').value = '';
+        document.getElementById('post-content').value = '';
         loadPosts(); // Reload the posts after adding a new one
     })
     .catch(error => console.error('Error:', error));  // If an error occurs, log it to the console
@@ -111,8 +133,14 @@ function login() {
     .then(res => res.json())
     .then(data => {
         alert(data.message || data.error);
-        document.getElementById('logout-btn').style.display = 'inline-block';
-    });
+        document.getElementById('login-btn').style.display = 'none';
+        document.getElementById('register-btn').style.display = 'none';
+        document.getElementById('user-info').textContent = `Logged in as ${username}`;
+    })
+    .catch(error => {
+        console.error('Login error:', error);
+        alert('Fehler beim Login. Bitte API prüfen.');
+    });  // <- Diese schließende Klammer war fehlend
 }
 
 function logout() {
@@ -124,6 +152,8 @@ function logout() {
     .then(res => res.json())
     .then(data => {
         alert(data.message || data.error);
-        document.getElementById('logout-btn').style.display = 'none';
+        document.getElementById('login-btn').style.display = 'inline-block';
+        document.getElementById('register-btn').style.display = 'inline-block';
+        document.getElementById('user-info').textContent = '';
     });
 }

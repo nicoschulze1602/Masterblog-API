@@ -13,13 +13,28 @@
         <div class="input-field">
             <input type="text" id="username" placeholder="Username">
             <input type="password" id="password" placeholder="Password">
-            <button onclick="register()">Register</button>
-            <button onclick="login()">Login</button>
+            <button onclick="register()" id="register-btn">Register</button>
+            <button onclick="login()" id="login-btn">Login</button>
             <button onclick="logout()" id="logout-btn" style="display:none;">Logout</button>
+            <div id="user-info" class="user-info" style="margin-left: auto;"></div>
         </div>
         <div class="input-field">
             <input type="text" id="api-base-url" placeholder="Enter API Base URL" value="http://127.0.0.1:5002/api">
             <button onclick="loadPosts()">Load Posts</button>
+        </div>
+        <div class="input-field">
+            <input type="text" id="search-title" placeholder="Search by Title">
+            <input type="text" id="search-content" placeholder="Search by Content">
+            <select id="sort-field">
+                <option value="">Sort By</option>
+                <option value="title">Title</option>
+                <option value="content">Content</option>
+            </select>
+            <select id="sort-direction">
+                <option value="asc">Asc</option>
+                <option value="desc">Desc</option>
+            </select>
+            <button onclick="loadPosts()">Apply</button>
         </div>
         <div class="input-field">
             <input type="text" id="post-title" placeholder="Enter Post Title">

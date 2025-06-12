@@ -1,0 +1,9 @@
+[
+    {
+        "post_id": 1,
+        "title": "Getting started with Flask",
+        "content": "Flask is a lightweight framework.",
+        "user_id": "1",
+        "timestamp": "2025-06-10 12:00:00"
+    }
+]

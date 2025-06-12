@@ -1,150 +1,302 @@
-from flask import Flask, jsonify, request, make_response, session
-from flask_cors import CORS
-from werkzeug.security import generate_password_hash, check_password_hash
+# -*- coding: utf-8 -*-
+"""A simple Flask API for managing users and posts in JSON files."""
+
+import json
+import os
+from datetime import datetime
 from uuid import uuid4
 
+from flask import Flask, jsonify, request, session
+from flask_cors import CORS
+from werkzeug.security import check_password_hash, generate_password_hash
+
+# =============================================================================
+# App Configuration
+# =============================================================================
 app = Flask(__name__)
-CORS(app)  # This will enable CORS for all routes
-app.secret_key = 'supersecretkey'  # Für Sessions (in echten Projekten env nutzen!)
 
-POSTS = [
-    {"id": 1, "title": "Getting started with Flask", "content": "Flask is a lightweight WSGI web application framework."},
-    {"id": 2, "title": "Advanced Django Tips", "content": "Learn how to optimize your Django application for performance."},
-    {"id": 3, "title": "Python List Comprehensions", "content": "A concise way to create lists in Python."},
-    {"id": 4, "title": "REST API Design", "content": "Best practices for designing a RESTful API."},
-    {"id": 5, "title": "Introduction to Machine Learning", "content": "Explore the basics of machine learning with Python."},
-    {"id": 6, "title": "Deploying Flask Apps", "content": "Guide to deploying your Flask application on Heroku."},
-    {"id": 7, "title": "Handling Forms in Flask", "content": "Use WTForms to manage user input easily."},
-    {"id": 8, "title": "Flask vs Django", "content": "Comparison between two popular Python web frameworks."},
-    {"id": 9, "title": "Writing Tests in Python", "content": "How to use unittest and pytest for effective testing."},
-    {"id": 10, "title": "Building a Blog with Flask", "content": "Step-by-step tutorial to create a blog using Flask."},
-    {"id": 11, "title": "Understanding Python Decorators", "content": "Decorators allow you to modify the behavior of functions."},
-    {"id": 12, "title": "Async Programming in Python", "content": "Use asyncio to write non-blocking code in Python."},
-    {"id": 13, "title": "Flask Extensions You Should Know", "content": "Flask-Login, Flask-Migrate, and more useful tools."},
-    {"id": 14, "title": "Simple CRUD with Flask and SQLite", "content": "Create, read, update, and delete entries with ease."},
-    {"id": 15, "title": "Tips for Debugging Flask Apps", "content": "Use Flask's debugger and logging for error tracking."}
-]
+# 💡 For production, the secret key should be loaded from an environment variable!
+#    e.g., app.secret_key = os.environ.get('SECRET_KEY')
+app.secret_key = 'supersecretkey'
+CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": "http://127.0.0.1:5001"}})
 
-USERS = {}  # username -> {password_hash, id}
+# Define paths to JSON data files
+BASE_DIR = os.path.dirname(__file__)
+USER_FILE = os.path.join(BASE_DIR, 'users.json')
+POST_FILE = os.path.join(BASE_DIR, 'posts.json')
 
+
+# =============================================================================
+# JSON Helper Functions
+# =============================================================================
+
+def load_data(file_path, default_value):
+    """
+    Load JSON data from a file.
+
+    Args:
+        file_path (str): The path to the JSON file.
+        default_value: The value to return if the file does not exist
+                       or an error occurs.
+
+    Returns:
+        The loaded JSON data or the default value.
+    """
+    if not os.path.exists(file_path):
+        return default_value
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except (json.JSONDecodeError, FileNotFoundError):
+        return default_value
+
+
+def save_data(file_path, data):
+    """
+    Save data to a JSON file with pretty printing.
+
+    Args:
+        file_path (str): The path to the JSON file.
+        data: The Python object (dict, list) to save.
+    """
+    with open(file_path, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
+
+
+def load_users():
+    """Load user data from the user file."""
+    return load_data(USER_FILE, {})
+
+
+def save_users(users):
+    """Save user data to the user file."""
+    save_data(USER_FILE, users)
+
+
+def load_posts():
+    """Load post data from the post file."""
+    return load_data(POST_FILE, [])
+
+
+def save_posts(posts):
+    """Save post data to the post file."""
+    save_data(POST_FILE, posts)
+
+
+# =============================================================================
+# Authentication Routes
+# =============================================================================
 
 @app.route('/api/register', methods=['POST'])
 def register():
+    """
+    Register a new user.
+
+    Expects a JSON body with 'username' and 'password'.
+    Returns:
+        - 201 Created: If registration is successful.
+        - 400 Bad Request: If username/password are missing or user exists.
+    """
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
+
     if not username or not password:
         return jsonify({"error": "Username and password required"}), 400
-    if username in USERS:
+
+    users = load_users()
+    if username in users:
         return jsonify({"error": "Username already exists"}), 400
-    USERS[username] = {
+
+    users[username] = {
         "id": str(uuid4()),
         "password_hash": generate_password_hash(password)
     }
+    save_users(users)
     return jsonify({"message": f"User {username} registered successfully."}), 201
 
 
 @app.route('/api/login', methods=['POST'])
 def login():
+    """
+    Log a user in by creating a session.
+
+    Expects a JSON body with 'username' and 'password'.
+    Returns:
+        - 200 OK: If login is successful.
+        - 401 Unauthorized: If credentials are invalid.
+    """
     data = request.get_json()
     username = data.get('username')
     password = data.get('password')
-    user = USERS.get(username)
+
+    users = load_users()
+    user = users.get(username)
+
     if not user or not check_password_hash(user['password_hash'], password):
         return jsonify({"error": "Invalid credentials"}), 401
+
     session['user'] = username
     return jsonify({"message": f"Logged in as {username}"}), 200
 
 
 @app.route('/api/logout', methods=['POST'])
 def logout():
+    """Log the current user out by clearing the session."""
     session.pop('user', None)
     return jsonify({"message": "Logged out successfully"}), 200
 
 
-@app.route('/api/posts/search', methods=['GET'])
-def search_for_post():
-    title_query = request.args.get('title')
-    content_query = request.args.get('content')
+@app.route('/api/session', methods=['GET'])
+def session_info():
+    """Get information about the current session."""
+    if 'user' in session:
+        return jsonify({"user": session['user']})
+    return jsonify({"user": None}), 200
 
-    matching_posts = POSTS
 
-    if title_query:
-        matching_posts = [post for post in matching_posts if title_query.lower() in post['title'].lower()]
-    if content_query:
-        matching_posts = [post for post in matching_posts if content_query.lower() in post['content'].lower()]
-
-    return jsonify(matching_posts)
-
+# =============================================================================
+# Post Routes
+# =============================================================================
 
 @app.route('/api/posts', methods=['GET'])
 def get_posts():
+    """
+    Retrieve a list of all posts.
+
+    Query Params:
+        - sort (str, optional): Field to sort by ('title', 'content').
+        - direction (str, optional): 'asc' or 'desc'. Default is 'asc'.
+    """
+    posts = load_posts()
     sort_field = request.args.get('sort')
-    sort_direction = request.args.get('direction', 'asc')  # default: ascending
+    sort_direction = request.args.get('direction', 'asc')
 
     if sort_field in ['title', 'content']:
         reverse = sort_direction == 'desc'
-        sorted_posts = sorted(POSTS, key=lambda post: post[sort_field].lower(), reverse=reverse)
-        return jsonify(sorted_posts)
+        posts.sort(key=lambda post: post[sort_field].lower(), reverse=reverse)
 
-    return jsonify(POSTS)
+    return jsonify(posts)
+
+
+@app.route('/api/posts/search', methods=['GET'])
+def search_for_post():
+    """
+    Search for posts based on title and/or content.
+
+    Query Params:
+        - title (str, optional): A substring to search for in post titles.
+        - content (str, optional): A substring to search for in post content.
+    """
+    posts = load_posts()
+    title_query = request.args.get('title')
+    content_query = request.args.get('content')
+
+    if title_query:
+        posts = [p for p in posts if title_query.lower() in p['title'].lower()]
+    if content_query:
+        posts = [p for p in posts if content_query.lower() in p['content'].lower()]
+
+    return jsonify(posts)
 
 
 @app.route('/api/posts', methods=['POST'])
 def add_post():
+    """
+    Add a new post. Requires user to be logged in.
+
+    Expects a JSON body with 'title' and 'content'.
+    Returns:
+        - 201 Created: If the post is created successfully.
+        - 400 Bad Request: If title or content are missing.
+        - 401 Unauthorized: If the user is not logged in.
+    """
     if 'user' not in session:
         return jsonify({"error": "Authentication required"}), 401
-    new_post = request.get_json()
-    if not new_post or 'title' not in new_post or 'content' not in new_post:
-        return jsonify({"error": "Invalid data"}), 400
 
-    new_id = max(post['id'] for post in POSTS) + 1 if POSTS else 1
+    new_post_data = request.get_json()
+    if not new_post_data or 'title' not in new_post_data or 'content' not in new_post_data:
+        return jsonify({"error": "Invalid data, 'title' and 'content' are required."}), 400
+
+    posts = load_posts()
     post = {
-        "id": new_id,
-        "title": new_post['title'],
-        "content": new_post['content'],
-        "author": session['user']
+        "id": str(uuid4()),
+        "title": new_post_data['title'],
+        "content": new_post_data['content'],
+        "author": session['user'],
+        "timestamp": datetime.now().strftime("%d.%m.%Y %H:%M:%S")
     }
-    POSTS.append(post)
+    posts.append(post)
+    save_posts(posts)
     return jsonify(post), 201
 
 
-@app.route('/api/posts/<int:post_id>', methods=['DELETE'])
-def delete_post(post_id):
+@app.route('/api/posts/<string:post_id>', methods=['PUT'])
+def update_post(post_id):
+    """
+    Update an existing post.
+
+    Requires user to be logged in and to be the author of the post.
+    Expects a JSON body with optional 'title' and 'content'.
+    Returns:
+        - 200 OK: If update is successful.
+        - 400 Bad Request: If no data is provided.
+        - 401 Unauthorized: If user is not logged in.
+        - 403 Forbidden: If user is not the author.
+        - 404 Not Found: If the post does not exist.
+    """
     if 'user' not in session:
         return jsonify({"error": "Authentication required"}), 401
-    global POSTS
 
-    post_to_delete = next((post for post in POSTS if post['id'] == post_id), None)
-    if post_to_delete is None:
+    updated_data = request.get_json()
+    if not updated_data:
+        return jsonify({"error": "No input data provided."}), 400
+
+    posts = load_posts()
+    post_to_update = next((p for p in posts if p['id'] == post_id), None)
+
+    if not post_to_update:
+        return jsonify({"error": f"Post with id {post_id} not found."}), 404
+    if post_to_update.get('author') != session['user']:
+        return jsonify({"error": "Not authorized to edit this post."}), 403
+
+    post_to_update['title'] = updated_data.get('title', post_to_update['title'])
+    post_to_update['content'] = updated_data.get('content', post_to_update['content'])
+    save_posts(posts)
+
+    return jsonify(post_to_update), 200
+
+
+@app.route('/api/posts/<string:post_id>', methods=['DELETE'])
+def delete_post(post_id):
+    """
+    Delete a post by its ID.
+
+    Requires user to be logged in and to be the author of the post.
+    Returns:
+        - 200 OK: If deletion is successful.
+        - 401 Unauthorized: If user is not logged in.
+        - 403 Forbidden: If user is not the author.
+        - 404 Not Found: If the post does not exist.
+    """
+    if 'user' not in session:
+        return jsonify({"error": "Authentication required"}), 401
+
+    posts = load_posts()
+    post_to_delete = next((p for p in posts if p['id'] == post_id), None)
+
+    if not post_to_delete:
         return jsonify({"error": f"Post with id {post_id} not found."}), 404
     if post_to_delete.get('author') != session['user']:
         return jsonify({"error": "Not authorized to delete this post."}), 403
 
-    POSTS = [post for post in POSTS if post['id'] != post_id]
+    posts = [p for p in posts if p['id'] != post_id]
+    save_posts(posts)
     return jsonify({"message": f"Post with id {post_id} has been deleted successfully."}), 200
 
 
-@app.route('/api/posts/<int:post_id>', methods=['PUT'])
-def update_post(post_id):
-    if 'user' not in session:
-        return jsonify({"error": "Authentication required"}), 401
-    updated_data = request.get_json()
-    if updated_data is None:
-        return jsonify({"error": "No input provided."}), 400
-
-    post = next((post for post in POSTS if post['id'] == post_id), None)
-    if post is None:
-        return jsonify({"error": f"Post with id {post_id} not found."}), 404
-    if post.get('author') != session['user']:
-        return jsonify({"error": "Not authorized to edit this post."}), 403
-
-    # Nur aktualisieren, wenn neue Werte übergeben wurden
-    post['title'] = updated_data.get('title', post['title'])
-    post['content'] = updated_data.get('content', post['content'])
-
-    return jsonify(post), 200
-
-
+# =============================================================================
+# Run Application
+# =============================================================================
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5002, debug=True)

@@ -1,0 +1,10 @@
+{
+    "test_user1": {
+        "user_id": "1",
+        "password_hash": "pbkdf2:sha256:..."
+    },
+    "Nico": {
+        "user_id": "2",
+        "password_hash": "pbkdf2:sha256:..."
+    }
+}
