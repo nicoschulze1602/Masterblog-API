@@ -15,15 +15,20 @@ from werkzeug.security import check_password_hash, generate_password_hash
 # =============================================================================
 app = Flask(__name__)
 
+app.config.update(
+    SESSION_COOKIE_SAMESITE='Lax',
+    SESSION_COOKIE_SECURE=False
+)
+
 # 💡 For production, the secret key should be loaded from an environment variable!
 #    e.g., app.secret_key = os.environ.get('SECRET_KEY')
 app.secret_key = 'supersecretkey'
-CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": "http://127.0.0.1:5001"}})
+CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": "http://localhost:5001"}})
 
 # Define paths to JSON data files
 BASE_DIR = os.path.dirname(__file__)
 USER_FILE = os.path.join(BASE_DIR, 'users.json')
-POST_FILE = os.path.join(BASE_DIR, 'posts.json')
+POST_FILE = os.path.join(BASE_DIR, 'blogposts.json')
 
 
 # =============================================================================
@@ -224,7 +229,7 @@ def add_post():
         "title": new_post_data['title'],
         "content": new_post_data['content'],
         "author": session['user'],
-        "timestamp": datetime.now().strftime("%d.%m.%Y %H:%M:%S")
+        "timestamp": datetime.now().isoformat()
     }
     posts.append(post)
     save_posts(posts)

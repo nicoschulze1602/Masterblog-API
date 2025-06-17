@@ -1,12 +1,12 @@
 // Function that runs once the window is fully loaded
-window.onload = function() {
-    // Attempt to retrieve the API base URL from the local storage
+window.onload = function () {
     var savedBaseUrl = localStorage.getItem('apiBaseUrl');
-    // If a base URL is found in local storage, load the posts
-    if (savedBaseUrl) {
-        document.getElementById('api-base-url').value = savedBaseUrl;
-        loadPosts();
+    if (!savedBaseUrl || !savedBaseUrl.includes('localhost')) {
+        savedBaseUrl = 'http://localhost:5002/api';
+        localStorage.setItem('apiBaseUrl', savedBaseUrl);
     }
+    document.getElementById('api-base-url').value = savedBaseUrl;
+    loadPosts();
 }
 
 // Function to fetch all the posts from the API and display them on the page
@@ -19,14 +19,14 @@ function loadPosts() {
     const sortField = document.getElementById('sort-field').value;
     const sortDirection = document.getElementById('sort-direction').value;
 
-    let url = baseUrl;
+    let url = baseUrl + '/posts';
     let isSearch = searchTitle || searchContent;
     if (isSearch) {
-        url += '/search?';
+        url = baseUrl + '/posts/search?';
         if (searchTitle) url += `title=${encodeURIComponent(searchTitle)}&`;
         if (searchContent) url += `content=${encodeURIComponent(searchContent)}&`;
     } else {
-        url += '/posts?';
+        url += '?';
     }
 
     if (sortField) url += `sort=${sortField}&`;
@@ -36,26 +36,49 @@ function loadPosts() {
 
     fetch(baseUrl + '/session', { credentials: 'include' })
         .then(res => res.json())
+        .catch(() => ({ user: null }))
         .then(session => {
+            console.log("Session:", session);
+            const currentUser = session.user || null;
+
             fetch(url, { credentials: 'include' })
                 .then(response => response.json())
                 .then(data => {
+                    console.log("Posts from server:", data);
                     const postContainer = document.getElementById('post-container');
                     postContainer.innerHTML = '';
                     data.reverse(); // recent first
+
                     data.forEach(post => {
                         const postDiv = document.createElement('div');
                         postDiv.className = 'post';
-                        // Add class for my-post or other-post
-                        if (post.author === session.user) {
+                        postDiv.setAttribute('data-id', post.id);
+
+                        if (post.author === currentUser) {
                             postDiv.classList.add('my-post');
                         } else {
                             postDiv.classList.add('other-post');
                         }
-                        let html = `<h2>${post.title}</h2><p>${post.content}</p>`;
-                        if (post.author === session.user) {
-                            html += `<button onclick="deletePost(${post.id})">Delete</button>`;
+
+                        let html = `
+                            <div class="post-content">
+                                <div class="post-header">
+                                    <h2>${post.title}</h2>
+                                    <div class="post-meta">by ${post.author} at ${new Date(post.timestamp).toLocaleString()}</div>
+                                </div>
+                                <p>${post.content}</p>
+                            </div>
+                        `;
+
+                        if (post.author === currentUser) {
+                            html += `
+                                <div class="button-group">
+                                    <button class="delete-btn" onclick="deletePost('${post.id}')">Delete</button>
+                                    <button class="edit-btn" onclick='renderEditForm(${JSON.stringify(post)})'>Edit</button>
+                                </div>
+                            `;
                         }
+
                         postDiv.innerHTML = html;
                         postContainer.appendChild(postDiv);
                     });
@@ -103,6 +126,52 @@ function deletePost(postId) {
     .catch(error => console.error('Error:', error));  // If an error occurs, log it to the console
 }
 
+function editPost(postId, currentTitle, currentContent) {
+    renderEditForm({id: postId, title: currentTitle, content: currentContent, author: ''});
+}
+
+function renderEditForm(post) {
+    const postDiv = document.querySelector(`[data-id="${post.id}"]`);
+    if (!postDiv) return;
+
+    postDiv.innerHTML = `
+        <div class="post-content">
+            <div class="post-header">
+                <input class="edit-title" value="${post.title}" />
+                <div class="post-meta">edited by ${post.author}</div>
+            </div>
+            <textarea class="edit-content">${post.content}</textarea>
+            <div class="edit-actions">
+                <button class="save-edit-btn">Save</button>
+                <button class="cancel-edit-btn">Cancel</button>
+            </div>
+        </div>
+    `;
+
+    postDiv.querySelector('.save-edit-btn').addEventListener('click', () => {
+        const newTitle = postDiv.querySelector('.edit-title').value;
+        const newContent = postDiv.querySelector('.edit-content').value;
+        submitEdit(post.id, newTitle, newContent);
+    });
+
+    postDiv.querySelector('.cancel-edit-btn').addEventListener('click', () => {
+        loadPosts();
+    });
+}
+
+function submitEdit(postId, newTitle, newContent) {
+    const baseUrl = document.getElementById('api-base-url').value;
+    fetch(`${baseUrl}/posts/${postId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ title: newTitle, content: newContent })
+    })
+    .then(res => res.json())
+    .then(() => loadPosts())
+    .catch(err => alert('Fehler beim Aktualisieren des Posts'));
+}
+
 // --- Authentication functions ---
 function register() {
     const baseUrl = document.getElementById('api-base-url').value;
@@ -139,8 +208,8 @@ function login() {
     })
     .catch(error => {
         console.error('Login error:', error);
-        alert('Fehler beim Login. Bitte API prüfen.');
-    });  // <- Diese schließende Klammer war fehlend
+        alert('Login Error. Please check the API.');
+    });
 }
 
 function logout() {

@@ -4,7 +4,7 @@
         "password_hash": "pbkdf2:sha256:..."
     },
     "Nico": {
-        "user_id": "2",
-        "password_hash": "pbkdf2:sha256:..."
+        "id": "2c5160f8-630b-4806-acfe-0381b4b38b40",
+        "password_hash": "scrypt:32768:8:1$w2jV8yLStR1m978t$58285d6ea9f8d6c5398010d940f654628b4ba58496a7e2b21ebb0e1b801b5af6cb47199f42cf11f9b57b79c2633829d8e17644cab5479ffa727f1a6c3eb720d7"
     }
 }
