@@ -4,13 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="92d67b5f-3385-4589-885c-8a5946c4f9ea" name="Changes" comment="Add timestamp. Improve code structure with PEP-8 guidelines and add Docstrings.">
+    <list default="true" id="92d67b5f-3385-4589-885c-8a5946c4f9ea" name="Changes" comment="Improve frontend Visualization.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Masterblog-API/backend/backend_app.py" beforeDir="false" afterPath="$PROJECT_DIR$/Masterblog-API/backend/backend_app.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Masterblog-API/backend/blogposts.json" beforeDir="false" afterPath="$PROJECT_DIR$/Masterblog-API/backend/blogposts.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Masterblog-API/backend/users.json" beforeDir="false" afterPath="$PROJECT_DIR$/Masterblog-API/backend/users.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Masterblog-API/frontend/static/main.js" beforeDir="false" afterPath="$PROJECT_DIR$/Masterblog-API/frontend/static/main.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Masterblog-API/frontend/static/styles.css" beforeDir="false" afterPath="$PROJECT_DIR$/Masterblog-API/frontend/static/styles.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Masterblog-API/frontend/templates/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/Masterblog-API/frontend/templates/index.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -157,7 +157,15 @@
       <option name="project" value="LOCAL" />
       <updated>1749714445745</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="Improve frontend Visualization.">
+      <option name="closed" value="true" />
+      <created>1750193990375</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1750193990375</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -166,6 +174,7 @@
     <MESSAGE value="add sorting function" />
     <MESSAGE value="Add user registration and login endpoints, allowing only authenticated users to create, update, and delete posts." />
     <MESSAGE value="Add timestamp. Improve code structure with PEP-8 guidelines and add Docstrings." />
-    <option name="LAST_COMMIT_MESSAGE" value="Add timestamp. Improve code structure with PEP-8 guidelines and add Docstrings." />
+    <MESSAGE value="Improve frontend Visualization." />
+    <option name="LAST_COMMIT_MESSAGE" value="Improve frontend Visualization." />
   </component>
 </project>
