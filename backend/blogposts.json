@@ -1,16 +1,69 @@
 [
     {
-        "id": "1",
-        "title": "Getting started with Flask",
-        "content": "Flask is a lightweight framework.",
         "author": "test_user1",
-        "timestamp": "2025-06-10 12:00:00"
+        "content": "Flask is a lightweight framework.",
+        "id": "1",
+        "likes": [],
+        "timestamp": "2025-06-10 12:00:00",
+        "title": "Getting started with Flask"
     },
     {
-        "id": "25882d92-4b1d-4f21-b40b-951c58421c41",
-        "title": "test",
-        "content": "bongo la, bongo cha cha cha",
         "author": "Nico",
-        "timestamp": "2025-06-17T16:22:40.251069"
+        "comments": [
+            {
+                "author": "Nico",
+                "text": "what song is it?",
+                "timestamp": "2025-06-18T05:35:40.712448"
+            },
+            {
+                "author": "Nico",
+                "text": "Hello?",
+                "timestamp": "2025-06-18T23:39:30.162240"
+            },
+            {
+                "author": "Nico",
+                "text": "I NEED TO KNOW IT",
+                "timestamp": "2025-06-18T23:40:11.599611"
+            },
+            {
+                "author": "Nico",
+                "text": "??? anyone?",
+                "timestamp": "2025-06-18T23:40:27.629212"
+            },
+            {
+                "author": "Nico",
+                "timestamp": "2025-06-25T19:43:41.246162",
+                "text": "Hi"
+            }
+        ],
+        "content": "bongo la, bongo cha cha cha",
+        "id": "25882d92-4b1d-4f21-b40b-951c58421c41",
+        "likes": [],
+        "timestamp": "2025-06-17T16:22:40.251069",
+        "title": "test"
+    },
+    {
+        "id": "7a78c9ae-7ac4-47d1-8436-3655b8141a64",
+        "title": "Hi ",
+        "content": "Hello there! ",
+        "author": "Nico",
+        "timestamp": "2025-06-25T20:11:32.502872",
+        "likes": [],
+        "comments": [
+            {
+                "author": "Nico",
+                "timestamp": "2025-06-26T21:34:36.036859",
+                "text": "?"
+            }
+        ]
+    },
+    {
+        "id": "57ddc4eb-6900-4fcc-b1bc-1d40df98b454",
+        "title": "Moin",
+        "content": "Hallo da",
+        "author": "Nico",
+        "timestamp": "2025-06-25T20:39:50.081409",
+        "likes": [],
+        "comments": []
     }
 ]

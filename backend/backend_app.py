@@ -23,6 +23,7 @@ app.config.update(
 # 💡 For production, the secret key should be loaded from an environment variable!
 #    e.g., app.secret_key = os.environ.get('SECRET_KEY')
 app.secret_key = 'supersecretkey'
+# FIX: Corrected CORS origin to allow requests from the frontend's port (5001)
 CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": "http://localhost:5001"}})
 
 # Define paths to JSON data files
@@ -174,6 +175,12 @@ def get_posts():
         - direction (str, optional): 'asc' or 'desc'. Default is 'asc'.
     """
     posts = load_posts()
+
+    # Ensure backward compatibility: all posts have a likes and comments list
+    for post in posts:
+        post.setdefault("likes", [])
+        post.setdefault("comments", [])
+
     sort_field = request.args.get('sort')
     sort_direction = request.args.get('direction', 'asc')
 
@@ -220,6 +227,7 @@ def add_post():
         return jsonify({"error": "Authentication required"}), 401
 
     new_post_data = request.get_json()
+    # Ensure new_post_data is not None and has required fields
     if not new_post_data or 'title' not in new_post_data or 'content' not in new_post_data:
         return jsonify({"error": "Invalid data, 'title' and 'content' are required."}), 400
 
@@ -229,7 +237,9 @@ def add_post():
         "title": new_post_data['title'],
         "content": new_post_data['content'],
         "author": session['user'],
-        "timestamp": datetime.now().isoformat()
+        "timestamp": datetime.now().isoformat(),
+        "likes": [],
+        "comments": []
     }
     posts.append(post)
     save_posts(posts)
@@ -270,6 +280,56 @@ def update_post(post_id):
     save_posts(posts)
 
     return jsonify(post_to_update), 200
+
+
+@app.route('/api/posts/<string:post_id>/comments', methods=['POST'])
+def add_comment(post_id):
+    if 'user' not in session:
+        return jsonify({"error": "Authentication required"}), 401
+
+    data = request.get_json()
+    comment_text = data.get("text", "").strip()
+    if not comment_text:
+        return jsonify({"error": "Comment text is required."}), 400
+
+    posts = load_posts()
+    for post in posts:
+        if post["id"] == post_id:
+            post.setdefault("comments", []).append({
+                "author": session['user'],
+                "timestamp": datetime.now().isoformat(),
+                "text": comment_text
+            })
+            save_posts(posts)
+            return jsonify({"message": "Comment added."}), 201
+
+    return jsonify({"error": "Post not found."}), 404
+
+
+@app.route('/api/posts/<string:post_id>/like-toggle', methods=['PUT'])
+def toggle_like(post_id):
+    if 'user' not in session:
+        return jsonify({"error": "Login required"}), 401
+
+    current_user = session['user']
+    posts = load_posts()
+
+    for post in posts:
+        if post["id"] == post_id:
+            post.setdefault("likes", [])
+
+            if current_user in post["likes"]:
+                post["likes"].remove(current_user)
+            else:
+                post["likes"].append(current_user)
+
+            save_posts(posts)
+            return jsonify({
+                "likes": len(post["likes"]),
+                "liked_by_user": current_user in post["likes"]
+            })
+
+    return jsonify({"error": "Post not found"}), 404
 
 
 @app.route('/api/posts/<string:post_id>', methods=['DELETE'])
