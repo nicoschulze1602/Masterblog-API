@@ -1,0 +1,747 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Masterblog API",
+    "version": "1.0.0",
+    "description": "Eine einfache API zum Verwalten von Blogposts und Benutzern (File-basiert)"
+  },
+  "host": "localhost:5002",
+  "basePath": "/api",
+  "schemes": ["http"],
+  "tags": [
+    {
+      "name": "Authentication",
+      "description": "Benutzerregistrierung, Login und Session-Verwaltung"
+    },
+    {
+      "name": "Post",
+      "description": "Post API - CRUD und Listen"
+    },
+    {
+      "name": "Interaction",
+      "description": "Interaktionen mit Posts (Kommentare, Likes)"
+    }
+  ],
+  "securityDefinitions": {
+    "cookieAuth": {
+      "type": "apiKey",
+      "in": "cookie",
+      "name": "session"
+    }
+  },
+  "paths": {
+    "/api/register": {
+      "post": {
+        "summary": "Registriert einen neuen Benutzer",
+        "tags": ["Authentication"],
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Benutzername und Passwort für die Registrierung",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RegisterRequest"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Benutzer erfolgreich registriert",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Fehlerhafte Anfrage (z.B. Benutzername existiert bereits, fehlende Daten)",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/login": {
+      "post": {
+        "summary": "Loggt einen Benutzer ein",
+        "tags": ["Authentication"],
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Benutzername und Passwort für den Login",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/LoginRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Login erfolgreich",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Ungültige Anmeldeinformationen",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/logout": {
+      "post": {
+        "summary": "Loggt den aktuellen Benutzer aus",
+        "tags": ["Authentication"],
+        "produces": ["application/json"],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Logout erfolgreich",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/session": {
+      "get": {
+        "summary": "Gibt Informationen über die aktuelle Sitzung zurück",
+        "tags": ["Authentication"],
+        "produces": ["application/json"],
+        "responses": {
+          "200": {
+            "description": "Sitzungsinformationen",
+            "schema": {
+              "$ref": "#/definitions/UserSession"
+            }
+          }
+        }
+      }
+    },
+    "/api/posts": {
+      "get": {
+        "summary": "Gibt eine Liste aller Posts zurück (paginiert und sortierbar)",
+        "produces": ["application/json"],
+        "tags": ["Post"],
+        "parameters": [
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Feld nach dem sortiert werden soll ('title', 'content')",
+            "required": false,
+            "type": "string",
+            "enum": ["title", "content"]
+          },
+          {
+            "name": "direction",
+            "in": "query",
+            "description": "Sortierrichtung ('asc' für aufsteigend, 'desc' für absteigend)",
+            "required": false,
+            "type": "string",
+            "enum": ["asc", "desc"],
+            "default": "asc"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Anzahl der zu überspringenden Posts (für Paginierung)",
+            "required": false,
+            "type": "integer",
+            "default": 0,
+            "minimum": 0
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximale Anzahl der zurückzugebenden Posts (für Paginierung)",
+            "required": false,
+            "type": "integer",
+            "minimum": 1
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Erfolgreiche Operation",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "posts": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/PostListItem"
+                  }
+                },
+                "total_posts": {
+                  "type": "integer"
+                },
+                "has_more": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Fügt einen neuen Post hinzu",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "tags": ["Post"],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "body",
+            "name": "post",
+            "description": "Post-Objekt, das erstellt werden soll (Titel und Inhalt)",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/NewPost"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Post erfolgreich erstellt",
+            "schema": {
+              "$ref": "#/definitions/Post"
+            }
+          },
+          "400": {
+            "description": "Ungültige Daten oder fehlende Felder",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentifizierung erforderlich",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/posts/search": {
+      "get": {
+        "summary": "Sucht nach Posts basierend auf einem Suchbegriff",
+        "produces": ["application/json"],
+        "tags": ["Post"],
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "description": "Der Suchbegriff",
+            "required": false,
+            "type": "string"
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "description": "Suchbereich ('all', 'title', 'content')",
+            "required": false,
+            "type": "string",
+            "enum": ["all", "title", "content"],
+            "default": "all"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Liste der gefundenen Posts",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "posts": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/PostListItem"
+                  }
+                },
+                "total_posts": {
+                  "type": "integer"
+                },
+                "has_more": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/posts/{post_id}": {
+      "put": {
+        "summary": "Aktualisiert einen bestehenden Post",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "tags": ["Post"],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "post_id",
+            "in": "path",
+            "description": "ID des Posts, der aktualisiert werden soll",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "in": "body",
+            "name": "post",
+            "description": "Aktualisierte Post-Daten (Titel und/oder Inhalt)",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/NewPost"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Post erfolgreich aktualisiert",
+            "schema": {
+              "$ref": "#/definitions/Post"
+            }
+          },
+          "400": {
+            "description": "Fehlende Eingabedaten",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentifizierung erforderlich",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Nicht autorisiert, diesen Post zu bearbeiten",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Post nicht gefunden",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Löscht einen spezifischen Post",
+        "produces": ["application/json"],
+        "tags": ["Post"],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "post_id",
+            "in": "path",
+            "description": "ID des Posts, der gelöscht werden soll",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Post erfolgreich gelöscht",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentifizierung erforderlich",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Nicht autorisiert, diesen Post zu löschen",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Post nicht gefunden",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/posts/{post_id}/comments": {
+      "post": {
+        "summary": "Fügt einen Kommentar zu einem Post hinzu",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "tags": ["Interaction"],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "post_id",
+            "in": "path",
+            "description": "ID des Posts, zu dem der Kommentar hinzugefügt werden soll",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          },
+          {
+            "in": "body",
+            "name": "body",
+            "description": "Kommentartext",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CommentRequest"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Kommentar erfolgreich hinzugefügt",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Kommentartext fehlt",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentifizierung erforderlich",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Post nicht gefunden",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/posts/{post_id}/like-toggle": {
+      "put": {
+        "summary": "Fügt einen Like hinzu oder entfernt ihn von einem Post",
+        "produces": ["application/json"],
+        "tags": ["Interaction"],
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "post_id",
+            "in": "path",
+            "description": "ID des Posts, dessen Like-Status geändert werden soll",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Like-Status erfolgreich geändert",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "likes": {
+                  "type": "integer",
+                  "description": "Anzahl der Likes"
+                },
+                "liked_by_user": {
+                  "type": "boolean",
+                  "description": "Gibt an, ob der aktuelle Benutzer den Post geliked hat"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Login erforderlich",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Post nicht gefunden",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "error": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "RegisterRequest": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string",
+          "example": "neuerbenutzer"
+        },
+        "password": {
+          "type": "string",
+          "example": "SicheresPasswort123"
+        }
+      },
+      "required": ["username", "password"]
+    },
+    "LoginRequest": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string",
+          "example": "existinguser"
+        },
+        "password": {
+          "type": "string",
+          "example": "MeinPasswort"
+        }
+      },
+      "required": ["username", "password"]
+    },
+    "UserSession": {
+      "type": "object",
+      "properties": {
+        "user": {
+          "type": "string",
+          "nullable": true,
+          "description": "Der aktuell eingeloggte Benutzername, oder null wenn nicht eingeloggt"
+        }
+      }
+    },
+    "Post": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid",
+          "readOnly": true
+        },
+        "title": {
+          "type": "string",
+          "example": "Mein erster Blogpost"
+        },
+        "content": {
+          "type": "string",
+          "example": "Dies ist der Inhalt meines ersten Blogposts."
+        },
+        "author": {
+          "type": "string",
+          "description": "Der Benutzername des Autors des Posts"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time",
+          "readOnly": true
+        },
+        "likes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "description": "Benutzernamen, die den Post geliked haben"
+          },
+          "default": []
+        },
+        "comments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Comment"
+          },
+          "default": []
+        }
+      },
+      "required": ["title", "content", "author", "timestamp"]
+    },
+    "NewPost": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "example": "Mein neuer Blogpost"
+        },
+        "content": {
+          "type": "string",
+          "example": "Der Inhalt meines neuen Blogposts."
+        }
+      },
+      "required": ["title", "content"]
+    },
+    "PostListItem": {
+      "type": "object",
+      "allOf": [
+        {
+          "$ref": "#/definitions/Post"
+        }
+      ],
+      "description": "Eine vereinfachte Post-Definition für Listenansichten, die die zusätzlichen Felder für likes und comments enthält."
+    },
+    "CommentRequest": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string",
+          "example": "Das ist ein großartiger Post!"
+        }
+      },
+      "required": ["text"]
+    },
+    "Comment": {
+      "type": "object",
+      "properties": {
+        "author": {
+          "type": "string",
+          "description": "Der Benutzername des Kommentators"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "text": {
+          "type": "string"
+        }
+      },
+      "required": ["author", "timestamp", "text"]
+    }
+  }
+}

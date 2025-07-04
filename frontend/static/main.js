@@ -1,5 +1,8 @@
 // Global variable for message area timeout
 let messageTimeout;
+// Global offset for post pagination
+let currentPostOffset = 0;
+const POSTS_PER_PAGE = 5; // Number of posts per load
 
 // Function that runs once the window is fully loaded
 window.onload = function () {
@@ -40,25 +43,42 @@ function displayMessage(message, type) {
     }
 }
 
-
 // Function to fetch all the posts from the API and display them on the page
-function loadPosts() {
+// `append` parameter indicates whether to add new posts or replace existing ones
+async function loadPosts(append = false) {
     const baseUrl = document.getElementById('api-base-url').value;
     localStorage.setItem('apiBaseUrl', baseUrl);
 
-    const searchTitle = document.getElementById('search-title').value;
-    const searchContent = document.getElementById('search-content').value;
+    // References for the new Search UI
+    const searchInput = document.getElementById('search-query');
+    const searchScope = document.getElementById('search-scope');
+
     const sortField = document.getElementById('sort-field').value;
     const sortDirection = document.getElementById('sort-direction').value;
 
+    // Show loading indicator
+    const loadingIndicator = document.getElementById('loading-posts-indicator');
+    loadingIndicator.style.display = 'block';
+
+    // Get values from search fields
+    const searchQuery = searchInput ? searchInput.value.trim() : '';
+    const searchScopeValue = searchScope ? searchScope.value : 'all';
+
     let url = baseUrl + '/posts';
-    let isSearch = searchTitle || searchContent;
-    if (isSearch) {
+    const loadMoreBtn = document.getElementById('load-more-btn'); // Button reference
+
+    // Logic for search adaptation
+    if (searchQuery) { // If a search term has been entered
         url = baseUrl + '/posts/search?';
-        if (searchTitle) url += `title=${encodeURIComponent(searchTitle)}&`;
-        if (searchContent) url += `content=${encodeURIComponent(searchContent)}&`;
+        url += `query=${encodeURIComponent(searchQuery)}&`;
+        url += `scope=${encodeURIComponent(searchScopeValue)}&`;
+        currentPostOffset = 0; // Reset offset for new search to ensure fresh results
+        loadMoreBtn.style.display = 'none'; // Search results are currently not paginated
     } else {
         url += '?';
+        // Add pagination parameters only if no search is active
+        url += `offset=${currentPostOffset}&limit=${POSTS_PER_PAGE}&`;
+        // The Load More button will be displayed later based on data.has_more
     }
 
     if (sortField) url += `sort=${sortField}&`;
@@ -66,184 +86,261 @@ function loadPosts() {
 
     url = url.replace(/[&?]$/, '');
 
-    fetch(baseUrl + '/session', { credentials: 'include' })
-        .then(res => res.json())
-        .catch(() => ({ user: null }))
-        .then(session => {
-            console.log("Session:", session);
-            const currentUser = session.user || null;
+    try {
+        const sessionRes = await fetch(baseUrl + '/session', { credentials: 'include' });
+        const session = await sessionRes.json();
+        console.log("Session:", session);
+        const currentUser = session.user || null;
 
-            const statusDiv = document.getElementById('session-status');
-            const loginBtn = document.getElementById('login-btn');
-            const registerBtn = document.getElementById('register-btn');
-            const logoutBtn = document.getElementById('logout-btn');
-            const usernameInput = document.getElementById('username');
-            const passwordInput = document.getElementById('password');
-            const userInfoDiv = document.getElementById('user-info');
+        const statusDiv = document.getElementById('session-status');
+        const loginBtn = document.getElementById('login-btn');
+        const registerBtn = document.getElementById('register-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
 
-            // Update UI based on login status
-            if (currentUser) {
-                statusDiv.textContent = `✅ Logged in as ${currentUser}`;
-                statusDiv.style.color = 'green';
-                loginBtn.style.display = 'none';
-                registerBtn.style.display = 'none';
-                usernameInput.style.display = 'none';
-                passwordInput.style.display = 'none';
-                logoutBtn.style.display = 'inline-block'; // Show logout button
-                userInfoDiv.textContent = `Logged in as ${currentUser}`; // Update user info
+        // Update UI based on login status
+        if (currentUser) {
+            statusDiv.textContent = `✅ Logged in as ${currentUser}`;
+            statusDiv.style.color = 'green';
+            loginBtn.style.display = 'none';
+            registerBtn.style.display = 'none';
+            usernameInput.style.display = 'none';
+            passwordInput.style.display = 'none';
+            logoutBtn.style.display = 'inline-block'; // Show logout button
+        } else {
+            statusDiv.textContent = '❌ Not logged in';
+            statusDiv.style.color = 'red';
+            loginBtn.style.display = 'inline-block';
+            registerBtn.style.display = 'inline-block';
+            usernameInput.style.display = 'inline-block';
+            passwordInput.style.display = 'inline-block';
+            logoutBtn.style.display = 'none'; // Hide logout button
+        }
+
+        const response = await fetch(url, { credentials: 'include' });
+        const data = await response.json(); // expect object with 'posts', 'total_posts', 'has_more'
+
+        console.log("Posts from server:", data);
+        const postContainer = document.getElementById('post-container');
+
+        if (!append) { // if not - clear container
+            postContainer.innerHTML = '';
+        }
+
+        const postsToRender = data.posts; // Backend now delivers in correct order (newest first)
+                                           // .reverse() was removed in the backend step
+
+        postsToRender.forEach(post => { // loop through the posts
+            const postDiv = document.createElement('div');
+            postDiv.className = 'post';
+            postDiv.setAttribute('data-id', post.id);
+
+            if (post.author === currentUser) {
+                postDiv.classList.add('my-post');
             } else {
-                statusDiv.textContent = '❌ Not logged in';
-                statusDiv.style.color = 'red';
-                loginBtn.style.display = 'inline-block';
-                registerBtn.style.display = 'inline-block';
-                usernameInput.style.display = 'inline-block';
-                passwordInput.style.display = 'inline-block';
-                logoutBtn.style.display = 'none'; // Hide logout button
-                userInfoDiv.textContent = ''; // Clear user info
+                postDiv.classList.add('other-post');
             }
 
-            fetch(url, { credentials: 'include' })
-                .then(response => response.json())
-                .then(data => {
-                    console.log("Posts from server:", data);
-                    const postContainer = document.getElementById('post-container');
-                    postContainer.innerHTML = '';
-                    data.reverse(); // recent first
-
-                    data.forEach(post => {
-                        const postDiv = document.createElement('div');
-                        postDiv.className = 'post';
-                        postDiv.setAttribute('data-id', post.id);
-
-                        if (post.author === currentUser) {
-                            postDiv.classList.add('my-post');
-                        } else {
-                            postDiv.classList.add('other-post');
-                        }
-
-                        // Ensure post.likes and post.comments are always arrays for display
-                        const likesCount = post.likes ? post.likes.length : 0;
-                        const commentsHtml = post.comments ? post.comments.map(c => `
+            // Ensure post.likes and post.comments are always arrays for display
+            const likesCount = post.likes ? post.likes.length : 0;
+            // initial shows only the last comment
+            let commentsHtml = '';
+            if (post.comments && post.comments.length > 0) {
+                const lastComment = post.comments[post.comments.length - 1];
+                commentsHtml = `
+                    <div class="comment-summary">
+                        <span class="comment-author">${lastComment.author}</span>:
+                        <span class="comment-text">${lastComment.text}</span>
+                        <span class="comment-time">(${new Date(lastComment.timestamp).toLocaleString()})</span>
+                    </div>
+                    ${post.comments.length > 1 ? `<button class="show-all-comments-btn" data-post-id="${post.id}">Show all comments (${post.comments.length})</button>` : ''}
+                    <div class="full-comment-list" style="display:none;">
+                        ${post.comments.map(c => `
                             <div class="comment">
                                 <span class="comment-author">${c.author}</span>:
                                 <span class="comment-text">${c.text}</span>
                                 <span class="comment-time">(${new Date(c.timestamp).toLocaleString()})</span>
                             </div>
-                        `).join('') : '';
+                        `).join('')}
+                    </div>
+                `;
+            }
 
+            let html = `
+                <div class="post-content">
+                    <div class="post-header">
+                        <h2>${post.title}</h2>
+                        <div class="post-meta">by <strong style="color: #007BFF; font-weight: bold;">${post.author}</strong> at ${new Date(post.timestamp).toLocaleDateString()}</div>
+                    </div>
+                    <p>${post.content}</p>
+                    <div class="like-section">
+                        <button class="like-btn" data-post-id="${post.id}">❤️</button>
+                        <span class="like-count">${likesCount}</span>
+                    </div>
 
-                        let html = `
-                            <div class="post-content">
-                                <div class="post-header">
-                                    <h2>${post.title}</h2>
-                                    <div class="post-meta">by ${post.author} at ${new Date(post.timestamp).toLocaleString()}</div>
-                                </div>
-                                <p>${post.content}</p>
-                                <div class="like-section">
-                                    <button class="like-btn" data-post-id="${post.id}">❤️</button>
-                                    <span class="like-count">${likesCount}</span>
-                                </div>
+                    <div class="comment-list">
+                        ${commentsHtml}
+                    </div>
+            `;
 
-                                <div class="comment-list">
-                                    ${commentsHtml}
-                                </div>
-                        `;
+            if (currentUser) {
+                html += `
+                    <div class="comment-form">
+                        <input class="comment-input" placeholder="Write a comment..." />
+                        <button class="comment-submit">Submit</button>
+                        <div class="comment-feedback" style="display:none; color: green; font-size: 0.9em;">Sent ✅</div>
+                        <div class="comment-warning">Comment cannot be empty.</div>
+                    </div>
+                `;
+            }
 
-                        if (currentUser) {
-                            html += `
-                                <div class="comment-form">
-                                    <input class="comment-input" placeholder="write a comment..." />
-                                    <button class="comment-submit">submit</button>
-                                    <div class="comment-feedback" style="display:none; color: green; font-size: 0.9em;">submitted ✅</div>
-                                    <div class="comment-warning">comment can not be empty.</div>
-                                </div>
-                            `;
-                        }
+            html += `</div>`;
 
-                        html += `</div>`;
+            if (post.author === currentUser) {
+                html += `
+                    <div class="button-group">
+                        <button class="delete-btn" onclick="deletePost('${post.id}')">Delete</button>
+                        <button class="edit-btn" onclick='renderEditForm(${JSON.stringify(post)})'>Edit</button>
+                    </div>
+                `;
+            }
 
-                        if (post.author === currentUser) {
-                            html += `
-                                <div class="button-group">
-                                    <button class="delete-btn" onclick="deletePost('${post.id}')">Delete</button>
-                                    <button class="edit-btn" onclick='renderEditForm(${JSON.stringify(post)})'>Edit</button>
-                                </div>
-                            `;
-                        }
+            postDiv.innerHTML = html;
 
-                        postDiv.innerHTML = html;
-
-                        const likeBtn = postDiv.querySelector('.like-btn');
-                        const likeCountSpan = postDiv.querySelector('.like-count');
-                        const isLiked = post.likes?.includes(currentUser);
-                        // FIX: Opacity logic reversed: 1 for liked, 0.5 for not liked
-                        likeBtn.style.opacity = isLiked ? 1 : 0.5;
-
-                        likeBtn?.addEventListener('click', () => {
-                            fetch(`${baseUrl}/posts/${post.id}/like-toggle`, {
-                                method: 'PUT',
-                                credentials: 'include'
-                            })
-                            .then(res => res.json())
-                            .then(data => {
-                                likeCountSpan.textContent = data.likes;
-                                // FIX: Opacity logic reversed: 1 for liked, 0.5 for not liked
-                                likeBtn.style.opacity = data.liked_by_user ? 1 : 0.5;
-                            })
-                            .catch(err => console.error('Like toggle failed:', err));
-                        });
-
-                        if (currentUser) {
-                            const input = postDiv.querySelector('.comment-input');
-                            const btn = postDiv.querySelector('.comment-submit');
-                            btn.addEventListener('click', () => {
-                                const warning = postDiv.querySelector('.comment-warning');
-                                const text = input.value.trim();
-                                if (!text) {
-                                    if (warning) warning.style.display = 'block';
-                                    displayMessage('Kommentartext kann nicht leer sein.', 'warning');
-                                    return;
-                                }
-                                if (warning) warning.style.display = 'none'; // Hide if valid text
-
-                                fetch(`${baseUrl}/posts/${post.id}/comments`, {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    credentials: 'include',
-                                    body: JSON.stringify({ text })
-                                })
-                                .then(res => {
-                                    if (!res.ok) { // Check if response was successful
-                                        return res.json().then(errData => { throw new Error(errData.error || `HTTP error! status: ${res.status}`); });
-                                    }
-                                    return res.json();
-                                })
-                                .then(() => {
-                                    input.value = '';
-                                    const feedback = postDiv.querySelector('.comment-feedback');
-                                    if (feedback) {
-                                        feedback.style.display = 'block';
-                                        setTimeout(() => {
-                                            feedback.style.display = 'none';
-                                            loadPosts();  // reload after brief feedback
-                                        }, 1000);
-                                    }
-                                    displayMessage('Kommentar erfolgreich hinzugefügt!', 'success');
-                                })
-                                .catch(err => {
-                                    console.error('Comment submission failed:', err);
-                                    displayMessage(`Fehler beim Hinzufügen des Kommentars: ${err.message || 'Unbekannter Fehler'}`, 'error');
-                                });
-                            });
-                        }
-                        postContainer.appendChild(postDiv);
-                    });
-                })
-                .catch(error => {
-                    console.error('Error loading posts:', error);
-                    displayMessage(`Fehler beim Laden der Posts: ${error.message || 'Unbekannter Fehler'}`, 'error');
+            // Event Listener for "Show all comments"
+            const showAllCommentsBtn = postDiv.querySelector('.show-all-comments-btn');
+            if (showAllCommentsBtn) {
+                showAllCommentsBtn.addEventListener('click', () => {
+                    const fullCommentList = postDiv.querySelector('.full-comment-list');
+                    if (fullCommentList.style.display === 'none') {
+                        fullCommentList.style.display = 'block';
+                        showAllCommentsBtn.textContent = 'Hide comments';
+                    } else {
+                        fullCommentList.style.display = 'none';
+                        showAllCommentsBtn.textContent = `Show all comments (${post.comments.length})`;
+                    }
                 });
+            }
+
+            const likeBtn = postDiv.querySelector('.like-btn');
+            const likeCountSpan = postDiv.querySelector('.like-count');
+            const isLiked = post.likes?.includes(currentUser);
+            // Opacity logic reversed: 1 for liked, 0.5 for not liked
+            likeBtn.style.opacity = isLiked ? 1 : 0.5;
+
+            likeBtn?.addEventListener('click', () => {
+                fetch(`${baseUrl}/posts/${post.id}/like-toggle`, {
+                    method: 'PUT',
+                    credentials: 'include'
+                })
+                .then(res => res.json())
+                .then(data => {
+                    likeCountSpan.textContent = data.likes;
+                    likeBtn.style.opacity = data.liked_by_user ? 1 : 0.5;
+                })
+                .catch(err => console.error('Like toggle failed:', err));
+            });
+
+            if (currentUser) {
+                const input = postDiv.querySelector('.comment-input');
+                const btn = postDiv.querySelector('.comment-submit');
+                btn.addEventListener('click', () => {
+                    const warning = postDiv.querySelector('.comment-warning');
+                    const text = input.value.trim();
+                    if (!text) {
+                        if (warning) warning.style.display = 'block';
+                        displayMessage('Comment text cannot be empty.', 'warning');
+                        return;
+                    }
+                    if (warning) warning.style.display = 'none'; // Hide if valid text
+
+                    fetch(`${baseUrl}/posts/${post.id}/comments`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ text })
+                    })
+                    .then(res => {
+                        if (!res.ok) { // Check if response was successful
+                            return res.json().then(errData => { throw new Error(errData.error || `HTTP error! status: ${res.status}`); });
+                        }
+                        return res.json();
+                    })
+                    .then(() => {
+                        input.value = '';
+                        const feedback = postDiv.querySelector('.comment-feedback');
+                        if (feedback) {
+                            feedback.style.display = 'block';
+                            setTimeout(() => {
+                                feedback.style.display = 'none';
+                                currentPostOffset = 0; // Reset offset to reload the entire list
+                                loadPosts();  // Reload posts
+                            }, 1000);
+                        }
+                        displayMessage('Comment added successfully!', 'success');
+                    })
+                    .catch(err => {
+                        console.error('Comment submission failed:', err);
+                        displayMessage(`Comment could not be added: ${err.message || 'Unknown error'}`, 'error');
+                    });
+                });
+            }
+            postContainer.appendChild(postDiv);
         });
+
+        // Offset update and show/hide "Load More"-Button (only if not searching)
+        if (!searchQuery) { // Only update offset and show button if not currently searching
+            currentPostOffset += postsToRender.length; // raises offset by the number of loaded posts
+            if (data.has_more) {
+                loadMoreBtn.style.display = 'block';
+            } else {
+                loadMoreBtn.style.display = 'none';
+            }
+        }
+
+    } catch (error) { // catch for the entire fetch-process
+        console.error('Error loading posts or session:', error);
+        displayMessage(`Error loading posts or session: ${error.message || 'Unknown error'}`, 'error');
+    } finally {
+        // Hide loading indicator
+        loadingIndicator.style.display = 'none';
+    }
+}
+
+// Function to load more posts
+function loadMorePosts() {
+    loadPosts(true); // Call loadPosts and tell it to append posts
+}
+
+// Function to toggle the visibility of the search and sort section
+function toggleSearchSection() {
+    const searchContainer = document.getElementById('search-container');
+    if (searchContainer.style.display === 'none' || searchContainer.style.display === '') {
+        searchContainer.style.display = 'flex'; // Use flex to match its flex-direction: column style
+    } else {
+        searchContainer.style.display = 'none';
+    }
+    currentPostOffset = 0; // Reset offset when toggling search to ensure fresh results
+    loadPosts(); // Reload posts based on potential new search/sort criteria
+}
+
+// Function to toggle the visibility of the add post section
+function toggleAddPostSection() {
+    const addPostContainer = document.getElementById('add-post-container');
+    if (addPostContainer) { // Check if the element exists
+        if (addPostContainer.style.display === 'none' || addPostContainer.style.display === '') {
+            addPostContainer.style.display = 'flex'; // Use flex to match its flex-direction: column style
+        } else {
+            addPostContainer.style.display = 'none';
+        }
+        // Optional: Clear fields when expanding the Add Post section
+        document.getElementById('post-title').value = '';
+        document.getElementById('post-content').value = '';
+        // Hide warnings
+        document.getElementById('title-warning').style.display = 'none';
+        document.getElementById('content-warning').style.display = 'none';
+    }
 }
 
 // Function to send a POST request to the API to add a new post
@@ -260,13 +357,13 @@ function addPost() {
 
     if (!postTitle.trim()) {
         titleWarning.style.display = 'block';
-        displayMessage('Title can not be empty.', 'warning');
+        displayMessage('Title cannot be empty.', 'warning');
         return;
     }
 
     if (!postContent.trim()) {
         contentWarning.style.display = 'block';
-        displayMessage('Content can not be empty.', 'warning');
+        displayMessage('Content cannot be empty.', 'warning');
         return;
     }
 
@@ -278,7 +375,7 @@ function addPost() {
         credentials: 'include'
     })
     .then(response => {
-        // FIX: Check if the response was successful (status 2xx)
+        // Check if the response was successful (status 2xx)
         if (!response.ok) {
             // If not successful, parse the error message from the backend
             return response.json().then(errData => {
@@ -292,28 +389,34 @@ function addPost() {
         displayMessage('Post added successfully!', 'success');
         document.getElementById('post-title').value = '';
         document.getElementById('post-content').value = '';
+
+        // Hide warnings if they were visible
+        document.getElementById('title-warning').style.display = 'none';
+        document.getElementById('content-warning').style.display = 'none';
+
+        // Collapse the Add Post section
+        const addPostContainer = document.getElementById('add-post-container');
+        if (addPostContainer) {
+            addPostContainer.style.display = 'none';
+        }
+
+        currentPostOffset = 0; // IMPORTANT: Reset offset so latest posts are loaded
         loadPosts(); // Reload the posts after adding a new one
     })
     .catch(error => {
-        // FIX: Improved error logging to show the actual error and display to user
+        // Improved error logging to show the actual error and display to user
         console.error('Error adding post:', error.message || error);
-        displayMessage(`Error adding post: ${error.message || 'Unknown Error'}`, 'error');
+        displayMessage(`Error adding post: ${error.message || 'Unknown error'}`, 'error');
     });
 }
 
 // Function to send a DELETE request to the API to delete a post
 function deletePost(postId) {
-    // FIX: Replaced confirm() with a console log and direct action.
-    // In a real app, you'd use a custom modal for confirmation.
     console.log("Attempting to delete post:", postId);
-    // if (!confirm("Do you really want to delete this post?")) {
-    //     return;
-    // }
-    displayMessage('Try to delete this post...', 'info'); // Info message
+    displayMessage('Attempting to delete post...', 'info'); // Info message
 
     var baseUrl = document.getElementById('api-base-url').value;
 
-    // Use the Fetch API to send a DELETE request to the specific post's endpoint with credentials
     fetch(baseUrl + '/posts/' + postId, {
         method: 'DELETE',
         credentials: 'include'
@@ -324,11 +427,12 @@ function deletePost(postId) {
         }
         console.log('Post deleted:', postId);
         displayMessage('Post deleted successfully!', 'success');
+        currentPostOffset = 0; // Reset offset so latest posts are loaded
         loadPosts(); // Reload the posts after deleting one
     })
     .catch(error => {
         console.error('Error deleting post:', error.message || error);
-        displayMessage(`Error deleting post: ${error.message || 'Unknown Error'}`, 'error');
+        displayMessage(`Error deleting post: ${error.message || 'Unknown error'}`, 'error');
     });
 }
 
@@ -380,12 +484,13 @@ function submitEdit(postId, newTitle, newContent) {
         return res.json();
     })
     .then(() => {
-        displayMessage('Post updated!', 'success');
+        displayMessage('Post updated successfully!', 'success');
+        currentPostOffset = 0; // Reset offset to reload the entire list
         loadPosts();
     })
     .catch(err => {
         console.error('Post update failed:', err.message || err);
-        displayMessage(`Error by updating post: ${err.message || 'Unknown Error'}`, 'error');
+        displayMessage(`Error updating post: ${err.message || 'Unknown error'}`, 'error');
     });
 }
 
@@ -396,7 +501,7 @@ function register() {
     const password = document.getElementById('password').value;
 
     if (!username.trim() || !password.trim()) {
-        displayMessage('Username and password are required', 'warning');
+        displayMessage('Username and password are required.', 'warning');
         return;
     }
 
@@ -414,11 +519,11 @@ function register() {
     })
     .then(data => {
         console.log(data.message || data.error);
-        displayMessage(data.message || data.error, data.message && data.message.includes('erfolgreich') ? 'success' : 'error'); // Check message content for success
+        displayMessage(data.message || data.error, data.message && data.message.includes('successfully') ? 'success' : 'error'); // Check message content for success
     })
     .catch(err => {
         console.error('Registration failed:', err.message || err);
-        displayMessage(`Registrierung failed: ${err.message || 'Unknown Error'}`, 'error');
+        displayMessage(`Registration failed: ${err.message || 'Unknown error'}`, 'error');
     });
 }
 
@@ -428,7 +533,7 @@ function login() {
     const password = document.getElementById('password').value;
 
     if (!username.trim() || !password.trim()) {
-        displayMessage('Please enter Username.', 'warning');
+        displayMessage('Please enter username and password.', 'warning');
         return;
     }
 
@@ -445,8 +550,9 @@ function login() {
         return res.json();
     })
     .then(data => {
-        console.log(data.message || data.error);
-        displayMessage(data.message || 'You logged in successfully!', 'success'); // Always show success message on OK response
+        const msg = data.message || 'Logged in successfully!';
+        console.log(msg);
+        displayMessage(msg, 'success');
         // Update UI immediately after successful login
         document.getElementById('login-btn').style.display = 'none';
         document.getElementById('register-btn').style.display = 'none';
@@ -454,11 +560,12 @@ function login() {
         document.getElementById('password').style.display = 'none';
         document.getElementById('logout-btn').style.display = 'inline-block';
         document.getElementById('user-info').textContent = `Logged in as ${username}`;
+        currentPostOffset = 0; // Reset offset so latest posts are loaded
         loadPosts(); // Reload posts to update UI for current user's posts (edit/delete buttons)
     })
     .catch(error => {
         console.error('Login error:', error.message || error);
-        displayMessage(`Login failed: ${error.message || 'invalid input'}`, 'error');
+        displayMessage(`Login failed: ${error.message || 'Invalid credentials'}`, 'error');
     });
 }
 
@@ -475,19 +582,22 @@ function logout() {
         return res.json();
     })
     .then(data => {
-        console.log(data.message || data.error);
-        displayMessage(data.message || 'logged in!', 'success');
+        const msg = data.message || 'Logged out successfully!';
+        console.log(msg);
+        displayMessage(msg, 'success');
         // Update UI immediately after successful logout
         document.getElementById('login-btn').style.display = 'inline-block';
         document.getElementById('register-btn').style.display = 'inline-block';
         document.getElementById('username').style.display = 'inline-block';
         document.getElementById('password').style.display = 'inline-block';
         document.getElementById('logout-btn').style.display = 'none';
-        document.getElementById('user-info').textContent = '';
+        const userInfo = document.getElementById('user-info');
+        if (userInfo) userInfo.textContent = '';
+        currentPostOffset = 0; // Reset offset so latest posts are loaded
         loadPosts(); // Reload posts after logout to hide edit/delete buttons
     })
     .catch(err => {
         console.error('Logout failed:', err.message || err);
-        displayMessage(`Logout failed: ${err.message || 'Unknown Error'}`, 'error');
+        displayMessage(`Logout failed: ${err.message || 'Unknown error'}`, 'error');
     });
 }

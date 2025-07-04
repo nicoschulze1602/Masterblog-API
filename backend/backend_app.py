@@ -8,6 +8,7 @@ from uuid import uuid4
 
 from flask import Flask, jsonify, request, session
 from flask_cors import CORS
+from flask_swagger_ui import get_swaggerui_blueprint
 from werkzeug.security import check_password_hash, generate_password_hash
 
 # =============================================================================
@@ -19,6 +20,15 @@ app.config.update(
     SESSION_COOKIE_SAMESITE='Lax',
     SESSION_COOKIE_SECURE=False
 )
+SWAGGER_URL = "/api/docs"
+API_URL = "/static/masterblog.json"
+
+swagger_ui_blueprint = get_swaggerui_blueprint(
+    SWAGGER_URL,
+    API_URL,
+    config={ 'app_name': 'Masterblog API' }
+)
+app.register_blueprint(swagger_ui_blueprint, url_prefix=SWAGGER_URL)
 
 # 💡 For production, the secret key should be loaded from an environment variable!
 #    e.g., app.secret_key = os.environ.get('SECRET_KEY')
@@ -175,6 +185,7 @@ def get_posts():
         - direction (str, optional): 'asc' or 'desc'. Default is 'asc'.
     """
     posts = load_posts()
+    posts.sort(key=lambda p: p['timestamp'], reverse=True)
 
     # Ensure backward compatibility: all posts have a likes and comments list
     for post in posts:
@@ -188,29 +199,62 @@ def get_posts():
         reverse = sort_direction == 'desc'
         posts.sort(key=lambda post: post[sort_field].lower(), reverse=reverse)
 
-    return jsonify(posts)
+    offset = request.args.get('offset', type=int, default=0)
+    limit = request.args.get('limit', type=int, default=None)
+
+    total_posts = len(posts)
+    paginated_posts = posts[offset:]  # Start from offset
+
+    if limit is not None:
+        paginated_posts = paginated_posts[:limit]  # Take only 'limit' posts from the offset
+
+    has_more = (offset + len(paginated_posts)) < total_posts
+    return jsonify({
+        "posts": paginated_posts,
+        "total_posts": total_posts,
+        "has_more": has_more
+    })
 
 
 @app.route('/api/posts/search', methods=['GET'])
 def search_for_post():
     """
-    Search for posts based on title and/or content.
+    Search for posts based on a query in title, content, or both.
 
     Query Params:
-        - title (str, optional): A substring to search for in post titles.
-        - content (str, optional): A substring to search for in post content.
+        - query (str, optional): The search term.
+        - scope (str, optional): 'all', 'title', or 'content'. Defaults to 'all'.
     """
     posts = load_posts()
-    title_query = request.args.get('title')
-    content_query = request.args.get('content')
+    search_query = request.args.get('query', '').lower() # Suchbegriff
+    search_scope = request.args.get('scope', 'all') # Suchbereich
 
-    if title_query:
-        posts = [p for p in posts if title_query.lower() in p['title'].lower()]
-    if content_query:
-        posts = [p for p in posts if content_query.lower() in p['content'].lower()]
+    posts.sort(key=lambda p: p['timestamp'], reverse=True)
 
-    return jsonify(posts)
+    if search_query:
+        filtered_posts = []
+        for post in posts:
+            match = False
+            if search_scope == 'all':
+                if search_query in post['title'].lower() or \
+                   search_query in post['content'].lower():
+                    match = True
+            elif search_scope == 'title':
+                if search_query in post['title'].lower():
+                    match = True
+            elif search_scope == 'content':
+                if search_query in post['content'].lower():
+                    match = True
 
+            if match:
+                filtered_posts.append(post)
+        posts = filtered_posts
+
+    return jsonify({
+        "posts": posts,
+        "total_posts": len(posts),
+        "has_more": False
+    })
 
 @app.route('/api/posts', methods=['POST'])
 def add_post():
@@ -237,7 +281,7 @@ def add_post():
         "title": new_post_data['title'],
         "content": new_post_data['content'],
         "author": session['user'],
-        "timestamp": datetime.now().isoformat(),
+        "timestamp": datetime.now().strftime('%Y-%m-%d, %H:%M:%S'),
         "likes": [],
         "comments": []
     }
