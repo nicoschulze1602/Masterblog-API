@@ -4,29 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="92d67b5f-3385-4589-885c-8a5946c4f9ea" name="Changes" comment="Add API Documentation.&#10;Improve visualisation Layout &amp; Colors.&#10;&#10;Add Pop-up-fields for AddPost and Search/Filter function instead of consistently showed input-areas to improve gui.">
-      <change afterPath="$PROJECT_DIR$/.codio" afterDir="false" />
+    <list default="true" id="92d67b5f-3385-4589-885c-8a5946c4f9ea" name="Changes" comment="Refactor: split responsibilities and add welcome message with API docs link&#10;- Moved general-purpose welcome route outside of API blueprint&#10;- Added welcome HTML block with styling and link to Swagger docs&#10;- Adjusted frontend to fetch and display the welcome message from the backend root">
       <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.guides/content/generated_pages.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.guides/img/Masterschool-logomark-white_on_black.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.guides/img/export_project.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.guides/img/meme.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.guides/img/swagger.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.guides/styles.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.settings" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/auth.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/backend_app.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/blogposts.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/config.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/routes.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/services.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/static/masterblog.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/backend/users.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/frontend_app.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/static/main.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/static/styles.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/frontend/templates/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -261,7 +240,15 @@
       <option name="project" value="LOCAL" />
       <updated>1751639754841</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="Refactor: split responsibilities and add welcome message with API docs link&#10;- Moved general-purpose welcome route outside of API blueprint&#10;- Added welcome HTML block with styling and link to Swagger docs&#10;- Adjusted frontend to fetch and display the welcome message from the backend root">
+      <option name="closed" value="true" />
+      <created>1752447302011</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1752447302011</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -273,6 +260,7 @@
     <MESSAGE value="Improve frontend Visualization." />
     <MESSAGE value="Improve overlay, add validation &amp; error messages and change Like-Button logic to toggle." />
     <MESSAGE value="Add API Documentation.&#10;Improve visualisation Layout &amp; Colors.&#10;&#10;Add Pop-up-fields for AddPost and Search/Filter function instead of consistently showed input-areas to improve gui." />
-    <option name="LAST_COMMIT_MESSAGE" value="Add API Documentation.&#10;Improve visualisation Layout &amp; Colors.&#10;&#10;Add Pop-up-fields for AddPost and Search/Filter function instead of consistently showed input-areas to improve gui." />
+    <MESSAGE value="Refactor: split responsibilities and add welcome message with API docs link&#10;- Moved general-purpose welcome route outside of API blueprint&#10;- Added welcome HTML block with styling and link to Swagger docs&#10;- Adjusted frontend to fetch and display the welcome message from the backend root" />
+    <option name="LAST_COMMIT_MESSAGE" value="Refactor: split responsibilities and add welcome message with API docs link&#10;- Moved general-purpose welcome route outside of API blueprint&#10;- Added welcome HTML block with styling and link to Swagger docs&#10;- Adjusted frontend to fetch and display the welcome message from the backend root" />
   </component>
 </project>

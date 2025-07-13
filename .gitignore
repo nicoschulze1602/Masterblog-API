@@ -10,6 +10,8 @@ __pycache__/
 venv/
 env/
 .env/ # In case .env is a directory
+.settings/
+.codio/
 
 # IDE specific files
 .vscode/
@@ -38,3 +40,4 @@ htmlcov/
 
 # Flask specific
 instance/
+
