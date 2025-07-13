@@ -1,0 +1,204 @@
+[
+    {
+        "author": "test_user1",
+        "content": "Flask is a lightweight framework.",
+        "id": "1",
+        "likes": [],
+        "timestamp": "2025-06-10 12:00:00",
+        "title": "Getting started with Flask"
+    },
+    {
+        "author": "Nico",
+        "comments": [
+            {
+                "author": "Nico",
+                "text": "what song is it?",
+                "timestamp": "2025-06-18T05:35:40.712448"
+            },
+            {
+                "author": "Nico",
+                "text": "Hello?",
+                "timestamp": "2025-06-18T23:39:30.162240"
+            },
+            {
+                "author": "Nico",
+                "text": "I NEED TO KNOW IT",
+                "timestamp": "2025-06-18T23:40:11.599611"
+            },
+            {
+                "author": "Nico",
+                "text": "??? anyone?",
+                "timestamp": "2025-06-18T23:40:27.629212"
+            },
+            {
+                "author": "Nico",
+                "timestamp": "2025-06-25T19:43:41.246162",
+                "text": "Hi"
+            }
+        ],
+        "content": "bongo la, bongo cha cha cha",
+        "id": "25882d92-4b1d-4f21-b40b-951c58421c41",
+        "likes": [],
+        "timestamp": "2025-06-17T16:22:40.251069",
+        "title": "test"
+    },
+    {
+        "id": "7a78c9ae-7ac4-47d1-8436-3655b8141a64",
+        "title": "Hi ",
+        "content": "Hello there! ",
+        "author": "Nico",
+        "timestamp": "2025-06-25T20:11:32.502872",
+        "likes": [],
+        "comments": [
+            {
+                "author": "Nico",
+                "timestamp": "2025-06-26T21:34:36.036859",
+                "text": "?"
+            }
+        ]
+    },
+    {
+        "id": "57ddc4eb-6900-4fcc-b1bc-1d40df98b454",
+        "title": "Moin",
+        "content": "Hallo da",
+        "author": "Nico",
+        "timestamp": "2025-06-25T20:39:50.081409",
+        "likes": [],
+        "comments": []
+    },
+    {
+        "id": "cb1d706a-b4e2-4b59-becb-1d12f112282b",
+        "title": "This is a big Post!",
+        "content": "Trolrolrololoooooooooooooooooooo ooooookbekb uasbksdvc sdvbsbdksbdvgskgdvgdguvs sduvgskbdvbsbdfvkvbsdjvg sdhsdbkjbvks",
+        "author": "Nico",
+        "timestamp": "2025-06-27T19:15:37.862777",
+        "likes": [],
+        "comments": []
+    },
+    {
+        "id": "3b104dd9-4fd2-4fba-a35f-63da5376cf0b",
+        "title": "Best anime? ",
+        "content": "pls gimme some",
+        "author": "Nico",
+        "timestamp": "2025-06-27T19:36:48.653161",
+        "likes": [],
+        "comments": []
+    },
+    {
+        "id": "60c4e7c0-6c05-4878-893f-df2023693df4",
+        "title": "hi",
+        "content": "test",
+        "author": "Nico",
+        "timestamp": "2025-06-27T19:37:20.690813",
+        "likes": [],
+        "comments": []
+    },
+    {
+        "id": "9df97b98-43c3-4fcd-8852-5c0e20aa1f4a",
+        "title": "Test",
+        "content": "Hello there.. again :) ",
+        "author": "Nico",
+        "timestamp": "2025-06-27T21:54:57.991440",
+        "likes": [],
+        "comments": []
+    },
+    {
+        "id": "a9947e9e-d7ca-4a78-a00f-27753a7befc3",
+        "title": "hallo",
+        "content": "hallo",
+        "author": "Nico",
+        "timestamp": "2025-06-27T22:06:59.911768",
+        "likes": [],
+        "comments": []
+    },
+    {
+        "id": "3a90c415-69ca-4c96-ad10-73dcecf386cb",
+        "title": "hi",
+        "content": "hi2",
+        "author": "Nico",
+        "timestamp": "2025-06-27T22:10:08.788305",
+        "likes": [],
+        "comments": []
+    },
+    {
+        "id": "0098de96-7e95-4ce3-8db6-10d6db8ffc7b",
+        "title": "Test post no x",
+        "content": "Maya Heee ",
+        "author": "Nico",
+        "timestamp": "2025-06-30T00:49:27.117903",
+        "likes": [],
+        "comments": [
+            {
+                "author": "Nico",
+                "timestamp": "2025-06-30T00:49:37.426003",
+                "text": "Maaaya Hooo"
+            },
+            {
+                "author": "Nico",
+                "timestamp": "2025-06-30T00:52:58.772151",
+                "text": "Maya Haaa"
+            },
+            {
+                "author": "Nico",
+                "timestamp": "2025-06-30T01:04:44.475745",
+                "text": "MAAYA HAHA"
+            }
+        ]
+    },
+    {
+        "id": "d269ce5f-f8c1-421e-87b1-d3ef5923027f",
+        "title": "Post title",
+        "content": "hjasdajkkgcka",
+        "author": "Nico",
+        "timestamp": "2025-07-02T10:31:06.271908",
+        "likes": [],
+        "comments": []
+    },
+    {
+        "id": "5d7e3145-6ef6-4466-a9fc-2a2188a47d85",
+        "title": "Die Magie des Sonnenaufgangs in den Alpen",
+        "content": "Es gibt nur wenige Dinge, die so beruhigend und inspirierend sind wie ein Sonnenaufgang in den majestätischen Alpen. Die Stille der noch schlafenden Natur, das erste sanfte Licht, das über die Berggipfel kriecht und die Schneefelder in ein goldenes Meer verwandelt, ist ein unvergessliches Erlebnis. Ein heißer Kaffee in der Hand, während die Welt langsam erwacht, macht den Moment perfekt. Dieses Naturspektakel erinnert uns daran, wie klein wir sind und welche unglaubliche Schönheit uns umgibt. Man sollte es mindestens einmal im Leben selbst erlebt haben.",
+        "author": "BesterTester",
+        "timestamp": "2025-07-03T13:36:39.820440",
+        "likes": [],
+        "comments": []
+    },
+    {
+        "id": "58649138-5a06-4e37-bb2d-3d482fba46ab",
+        "title": "Kurzer Tipp: Effizientes Zeitmanagement",
+        "content": "Priorisiere deine Aufgaben! Die Eisenhower-Matrix (wichtig/dringend) hilft enorm, den Fokus zu behalten und Ablenkungen zu minimieren. Fang mit den wichtigsten Dingen an und delegiere, wenn möglich.",
+        "author": "wrongUsername",
+        "timestamp": "2025-07-03T13:40:33.364482",
+        "likes": [],
+        "comments": []
+    },
+    {
+        "id": "f7d36d5c-96ed-4201-86be-dd0bcca7abd8",
+        "title": "Reisebericht: WE in Barcelona!",
+        "content": "Barcelona ist eine Stadt voller Leben, Kunst und Geschichte. Von Gaudís Sagrada Família bis zu den belebten Ramblas – es gibt an jeder Ecke etwas zu entdecken. Wir haben das Gotische Viertel erkundet, köstliche Tapas genossen und den Sonnenuntergang am Strand Barceloneta erlebt. Ein Highlight war definitiv der Besuch des Parc Güell, obwohl die Menschenmassen manchmal überwältigend waren. Die Architektur ist einfach atemberaubend und bietet fantastische Fotomotive. Wir kommen definitiv wieder!",
+        "author": "wrongUsername",
+        "timestamp": "2025-07-03T13:41:06.666515",
+        "likes": [],
+        "comments": []
+    },
+    {
+        "id": "5e50ac53-e251-46c3-88e4-e94161df6948",
+        "title": "Gedanken zum Homeoffice",
+        "content": "Home-Office hat Vor- und Nachteile. Flexibilität ist großartig, aber Disziplin und klare Grenzen sind entscheidend, um produktiv zu bleiben. Strukturierter Tagesablauf hilft.",
+        "author": "Nico",
+        "timestamp": "2025-07-03T15:37:13.140941",
+        "likes": [],
+        "comments": []
+    },
+    {
+        "id": "04a60891-74b5-49bb-9b4a-0a5c294e4e34",
+        "title": "Favorite shiny pokemon? ",
+        "content": "Found a shiny Glumanda today! Black Glurak is coming! 😏\nwhats your favorite shiny? ",
+        "author": "Ash Ketchum",
+        "timestamp": "2025-07-03T15:39:25.152023",
+        "likes": [
+            "Nico"
+        ],
+        "comments": []
+    }
+]

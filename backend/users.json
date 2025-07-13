@@ -1,0 +1,22 @@
+{
+    "test_user1": {
+        "user_id": "1",
+        "password_hash": "pbkdf2:sha256:..."
+    },
+    "Nico": {
+        "id": "2c5160f8-630b-4806-acfe-0381b4b38b40",
+        "password_hash": "scrypt:32768:8:1$w2jV8yLStR1m978t$58285d6ea9f8d6c5398010d940f654628b4ba58496a7e2b21ebb0e1b801b5af6cb47199f42cf11f9b57b79c2633829d8e17644cab5479ffa727f1a6c3eb720d7"
+    },
+    "BesterTester": {
+        "id": "8acb87fe-bf8c-424e-9d63-d9157d6a6436",
+        "password_hash": "scrypt:32768:8:1$jJhRRmj7gWRKAda7$d2662a35f1455d65bf4ae0fbc56073fb10e5b89bb4adbbd04d66d69684cd8530ed78f3295cbd8225200ec0b9c113da85db870dd13173985ec04b969585c21422"
+    },
+    "wrongUsername": {
+        "id": "95565490-4ee8-43f5-a849-82be96f375b4",
+        "password_hash": "scrypt:32768:8:1$UCFaanOoIbwQy3Yy$c829926b648f8e82d143d2173dba2c390bfc52867c6f192bb7111a07ecf505526711a5df9eb3027c96f40c84c01d6c78bc8bcb1d03785b9c161c4d3d0d453f1a"
+    },
+    "Ash Ketchum": {
+        "id": "8d39e13a-7a08-4163-8bd0-d08bc0ef60cd",
+        "password_hash": "scrypt:32768:8:1$Km0HNk1OTjctKmDZ$2b94c9123fb6b99321d21335d886e806ad44f1edb8947a09028a595c9e2ed6e875b2ef59b8437f1d30cd9c50e32908ce0f1edf9a265bae383f7563589483908c"
+    }
+}

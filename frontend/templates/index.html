@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Posts</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>📚 Blog Posts</h1>
+        <div id="welcome-message"></div>
+
+        <!-- Auth/User Info Header -->
+        <div class="auth-header">
+            <div id="session-status" style="font-weight: bold;"></div>
+            <div id="user-controls">
+                <input type="text" id="username" placeholder="Username">
+                <input type="password" id="password" placeholder="Password">
+                <button onclick="register()" id="register-btn">Register</button>
+                <button onclick="login()" id="login-btn">Login</button>
+                <button onclick="logout()" id="logout-btn" style="display:none;">Logout</button>
+            </div>
+        </div>
+
+        <!-- Main Control Bar -->
+        <div class="main-control-bar">
+            <input type="text" id="api-base-url" placeholder="Enter API Base URL" value="http://127.0.0.1:5002/api">
+            <button onclick="loadPosts()">🔄 Refresh Posts</button>
+            <button id="toggle-search-btn" onclick="toggleSearchSection()">🔍 Filter Posts</button>
+            <button id="toggle-add-post-btn" onclick="toggleAddPostSection()">➕ Create New Post</button>
+        </div>
+
+        <!-- Search/Sort Section -->
+        <div id="search-container" class="input-field" style="display: none; flex-direction: column; align-items: stretch;">
+            <input type="text" id="search-query" placeholder="Search title or content...">
+            <div class="search-options">
+                <select id="search-scope">
+                    <option value="all">All</option>
+                    <option value="title">Only Title</option>
+                    <option value="content">Only Content</option>
+                </select>
+                <select id="sort-field">
+                    <option value="">Sort By...</option>
+                    <option value="timestamp">Newest First</option>
+                    <option value="title">Title (A-Z)</option>
+                    <option value="content">Content (A-Z)</option>
+                </select>
+                <select id="sort-direction">
+                    <option value="desc">Descending</option>
+                    <option value="asc">Ascending</option>
+                </select>
+                <button onclick="loadPosts()">Apply</button>
+            </div>
+        </div>
+
+        <!-- Add Post Section -->
+        <div id="add-post-container" class="input-field" style="display: none; flex-direction: column; align-items: stretch;">
+            <input type="text" id="post-title" placeholder="Post Title">
+            <div id="title-warning" class="warning" style="display:none;">Title cannot be empty.</div>
+            <textarea id="post-content" placeholder="Post Content" rows="5"></textarea>
+            <div id="content-warning" class="warning" style="display:none;">Content cannot be empty.</div>
+            <button onclick="addPost()">Create Post</button>
+        </div>
+
+        <!-- Blog Post Container -->
+        <div id="post-container">
+            <!-- Blog posts will be inserted here by JavaScript -->
+        </div>
+
+        <!-- Load More Button -->
+        <div class="load-more-container">
+            <button id="load-more-btn" onclick="loadMorePosts()" style="display: none;">Load More Posts</button>
+            <div id="loading-posts-indicator" style="display:none; text-align: center; margin-top: 15px;">
+                <p>Loading posts...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="static/main.js"></script>
+</body>
+</html>
