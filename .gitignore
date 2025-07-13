@@ -1,0 +1,40 @@
+# Environment variables
+backend/.env
+
+# Python specific
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python/
+venv/
+env/
+.env/ # In case .env is a directory
+
+# IDE specific files
+.vscode/
+.idea/
+*.swp
+*~
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+
+# Data files (if you regenerate them and don't want to track changes manually)
+# For this project, users.json and blogposts.json are currently source data,
+# so you might want to track them. If they become purely generated data, uncomment:
+# users.json
+# blogposts.json
+
+# Logs
+*.log
+logs/
+
+# Test files
+.pytest_cache/
+htmlcov/
+.coverage
+
+# Flask specific
+instance/
