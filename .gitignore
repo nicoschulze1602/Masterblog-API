@@ -12,6 +12,7 @@ env/
 .env/ # In case .env is a directory
 .settings/
 .codio/
+.idea/
 
 # IDE specific files
 .vscode/
